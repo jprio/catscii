@@ -3,8 +3,8 @@ use serde::Deserialize;
 
 #[tokio::main]
 async fn main() {
-    let image = get_cat_image_bytes().await.unwrap();
-    println!("{:?}", image.hex_dump());
+    //let image = get_cat_image_bytes().await.unwrap();
+    println!("{}", get_catscii().await.unwrap());
 }
 
 async fn get_cat_image_url() -> color_eyre::Result<String> {
@@ -40,4 +40,11 @@ async fn get_cat_image_bytes() -> color_eyre::Result<Vec<u8>> {
         .bytes()
         .await?
         .to_vec())
+}
+
+async fn get_catscii() -> color_eyre::Result<String> {
+    let image_bytes = get_cat_image_bytes().await.unwrap();
+    let image = image::load_from_memory(&image_bytes)?;
+    let ascii_art = artem::convert(image, artem::options::OptionBuilder::new().build());
+    Ok(ascii_art)
 }
