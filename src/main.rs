@@ -1,8 +1,10 @@
+use pretty_hex::PrettyHex;
 use serde::Deserialize;
 
 #[tokio::main]
 async fn main() {
     let image = get_cat_image_bytes().await.unwrap();
+    println!("{:?}", image.hex_dump());
 }
 
 async fn get_cat_image_url() -> color_eyre::Result<String> {
