@@ -1,9 +1,22 @@
+use serde::Deserialize;
+
 #[tokio::main]
 async fn main() {
+    #[derive(Deserialize)]
+    struct CatImage {
+        url: String,
+    }
     let res = reqwest::get("https://api.thecatapi.com/v1/images/search")
         .await
         .unwrap();
-    println!("Status: {}", res.status());
-    let body = res.text().await.unwrap();
-    println!("Body: {}", body);
+    if !res.status().is_success() {
+        panic!("Request failed with HTTP {}", res.status());
+    }
+
+    //              👇
+    let images: Vec<CatImage> = res.json().await.unwrap();
+    let image = images
+        .first()
+        .expect("the cat API should return at least one image");
+    println!("The image is at {}", image.url);
 }
