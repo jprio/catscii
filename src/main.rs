@@ -10,7 +10,7 @@ use axum::{
 };
 use reqwest::StatusCode;
 use serde::Deserialize;
-use tracing::{info, Level};
+use tracing::{info, log::warn, Level};
 use tracing_subscriber::{filter::Targets, layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(Clone)]
@@ -33,9 +33,13 @@ async fn main() {
         .init();
 
     let app = Router::new().route("/", get(root_get)).with_state(state);
-
+    let quit_sig = async {
+        _ = tokio::signal::ctrl_c().await;
+        warn!("Initiating graceful shutdown");
+    };
     axum::Server::bind(&"0.0.0.0:8080".parse().unwrap())
         .serve(app.into_make_service())
+        .with_graceful_shutdown(quit_sig)
         .await
         .unwrap();
 }
