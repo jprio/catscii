@@ -1,12 +1,37 @@
-use pretty_hex::PrettyHex;
+use axum::{
+    body::BoxBody,
+    http::header,
+    response::{IntoResponse, Response},
+    routing::get,
+    Router,
+};
+use reqwest::StatusCode;
 use serde::Deserialize;
 
 #[tokio::main]
 async fn main() {
-    //let image = get_cat_image_bytes().await.unwrap();
-    println!("{}", get_catscii().await.unwrap());
+    let app = Router::new().route("/", get(root_get));
+
+    axum::Server::bind(&"0.0.0.0:8080".parse().unwrap())
+        .serve(app.into_make_service())
+        .await
+        .unwrap();
 }
 
+async fn root_get() -> Response<BoxBody> {
+    match get_catscii().await {
+        Ok(art) => (
+            StatusCode::OK,
+            [(header::CONTENT_TYPE, "text/plain; charset=utf-8")],
+            art,
+        )
+            .into_response(),
+        Err(e) => {
+            println!("Something went wrong: {e}");
+            (StatusCode::INTERNAL_SERVER_ERROR, "Something went wrong").into_response()
+        }
+    }
+}
 async fn get_cat_image_url() -> color_eyre::Result<String> {
     let api_url = "https://api.thecatapi.com/v1/images/search";
     let res = reqwest::get(api_url).await?;
@@ -45,6 +70,11 @@ async fn get_cat_image_bytes() -> color_eyre::Result<Vec<u8>> {
 async fn get_catscii() -> color_eyre::Result<String> {
     let image_bytes = get_cat_image_bytes().await.unwrap();
     let image = image::load_from_memory(&image_bytes)?;
-    let ascii_art = artem::convert(image, artem::options::OptionBuilder::new().build());
+    let ascii_art = artem::convert(
+        image,
+        artem::options::OptionBuilder::new()
+            .target(artem::options::TargetType::HtmlFile(true, true))
+            .build(),
+    );
     Ok(ascii_art)
 }
