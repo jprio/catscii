@@ -2,8 +2,7 @@ use serde::Deserialize;
 
 #[tokio::main]
 async fn main() {
-    let url = get_cat_image_url().await.unwrap();
-    println!("The image is at {}", url);
+    let image = get_cat_image_bytes().await.unwrap();
 }
 
 async fn get_cat_image_url() -> color_eyre::Result<String> {
@@ -26,4 +25,17 @@ async fn get_cat_image_url() -> color_eyre::Result<String> {
         return Err(color_eyre::eyre::eyre!("The Cat API returned no images"));
     };
     Ok(image.url)
+}
+
+async fn get_cat_image_bytes() -> color_eyre::Result<Vec<u8>> {
+    let cat_url = get_cat_image_url().await.unwrap();
+    let client = reqwest::Client::new();
+    Ok(client
+        .get(cat_url)
+        .send()
+        .await?
+        .error_for_status()?
+        .bytes()
+        .await?
+        .to_vec())
 }
