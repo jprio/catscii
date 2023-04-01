@@ -22,7 +22,7 @@ async fn root_get() -> Response<BoxBody> {
     match get_catscii().await {
         Ok(art) => (
             StatusCode::OK,
-            [(header::CONTENT_TYPE, "text/plain; charset=utf-8")],
+            [(header::CONTENT_TYPE, "text/html; charset=utf-8")],
             art,
         )
             .into_response(),
